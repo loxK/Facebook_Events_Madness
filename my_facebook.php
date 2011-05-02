@@ -4,7 +4,7 @@ require dirname(__FILE__) . '/facebook.php';
 class My_Facebook_Exception extends  Exception { }
 
 /**
- * Helper class to create facebook events for user profile, pages or app
+ * Helper class to easly create facebook events for user profile, pages or app
  */
 class My_Facebook {
 
@@ -83,13 +83,14 @@ class My_Facebook {
 			
 			// using curl we get a weird '(#100) The parameter name is required'
 			$r = file_get_contents('https://graph.facebook.com/me/accounts?access_token=' . $this->getToken() );
-			if(!$r || !$accounts=json_decode($r)) return new WP_Error('Something went wrong getting pages tokens');
-				
+			if(!$r || !$accounts=json_decode($r)) throw new My_Facebook_Exception('Something went wrong getting pages tokens');
+			
+			/* keeps all pages token */
 			foreach ($accounts->data as $account) {
 				$page_token[$account->id] = $account->access_token;
 			}
 			
-			if( !$page_token[$app] ) return new WP_Error('No access token found for specified page');
+			if( !$page_token[$app] ) throw new My_Facebook_Exception('No access token found for specified page');
 				
 			return $page_token[$app];
 			
@@ -97,33 +98,57 @@ class My_Facebook {
 		
 	}
 	
+	/**
+	 * Add an event for the configured fanpage
+	 * @param array $Data the event's data
+	 */
 	public function addPageEvent($Data) {
 	
 	    if(!$this->PageId) throw new My_Facebook_Exception("Cannot add event for the fanpage: Page ID is not set");
 		return $this->addEvent($this->PageId, $Data, $this->getToken($this->PageId));
 	}
 	
+	/**
+	 * Add an event for the configured app
+	 * @param array $Data the event's data
+	 */
 	public function addAppEvent($Data) {
 
 		return $this->addEvent($this->AppId, $Data, $this->getToken(true));
 	}
 
+	/**
+	 * Add an event for the connected user
+	 * @param array $Data the event's data
+	 */
 	public function addProfileEvent($Data) {
 
 		return $this->addEvent('me', $Data, $this->getToken());
 			
 	}
 	
-	public function addEvent($id, $Data, $Token, $File=null) {
+	/**
+	 * Add an event generic
+	 * @param string $id user, app or fanpage id
+	 * @param array $Data the event's data
+	 * @param string $Token the access token
+	 * @param string $File the event image (not implemented)
+	 */
+	private function addEvent($id, $Data, $Token, $File=null) {
 
 		$r = $this->api($id . '/events', $Token, $Data);
-		
 		
 		if( $r && !empty($r['id']) ) return $r['id'];
 		else var_dump($r);
 	
 	}
 	
+	/**
+	 * Wrapper to the PHP sdk api
+	 * @param string Graph api url
+	 * @param string $token access_token
+	 * @param array $data the data to send to the api
+	 */
 	function api($url, $token='', $data=array()){
 
 		$url = "/" . $url;
@@ -134,6 +159,12 @@ class My_Facebook {
 		return $result;
 	}
 	
+	/**
+	 * Custom graph api function
+	 * @param string Graph api url
+	 * @param string $token access_token
+	 * @param array $data the data to send to the api
+	 */
 	function graph($url, $token='', $data=array()){
 
 		$url = "https://graph.facebook.com/" . $url;
