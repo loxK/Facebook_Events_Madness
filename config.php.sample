@@ -1,0 +1,6 @@
+<?php
+
+$AppId = '';
+$AppKey = '';
+$AppSecret = '';
+$FanPageId = '';

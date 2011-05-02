@@ -1,0 +1,9 @@
+1) Copy config.php.smaple to config.php
+
+2) Edit it with your informations
+
+3) Open create_events.php
+
+4) Click Connect with Facebook
+
+(this script wil not ask you the needed facebook's permissions, so be sure you've granted them)
